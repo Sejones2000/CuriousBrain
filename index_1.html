@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curious Brain</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0f0f">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --surface3: #242424;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f0f0;
+    --text2: #999;
+    --text3: #666;
+    --accent: #c8f05a;
+    --accent2: #8be8c4;
+    --accent3: #f0a05a;
+    --accent4: #d8a5f5;
+    --danger: #f55a5a;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCREENS */
+  .screen { display: none; min-height: 100vh; padding: 24px 20px 100px; max-width: 480px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* NAV */
+  .nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around;
+    padding: 12px 0 20px;
+    z-index: 100;
+  }
+  .nav-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-family: 'Outfit', sans-serif; font-size: 11px; transition: color 0.2s;
+    padding: 4px 16px;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn svg { width: 22px; height: 22px; }
+
+  /* HEADER */
+  .header { margin-bottom: 28px; }
+  .header h1 { font-family: 'DM Serif Display', serif; font-size: 32px; line-height: 1.1; }
+  .header h1 em { font-style: italic; color: var(--accent); }
+  .header p { color: var(--text2); font-size: 14px; margin-top: 6px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-sm {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }
+
+  /* STREAK BANNER */
+  .streak-banner {
+    background: linear-gradient(135deg, #1a2a0a, #0a1a0a);
+    border: 1px solid rgba(200,240,90,0.2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .streak-num { font-family: 'DM Serif Display', serif; font-size: 40px; color: var(--accent); line-height: 1; }
+  .streak-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .streak-fire { font-size: 36px; }
+
+  /* TOPIC GRID */
+  .topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .topic-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .topic-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .topic-card.done { border-color: rgba(200,240,90,0.3); }
+  .topic-card .topic-icon { font-size: 24px; margin-bottom: 8px; }
+  .topic-card .topic-name { font-size: 13px; font-weight: 500; line-height: 1.3; }
+  .topic-card .topic-done { position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .topic-card .topic-done::after { content: '✓'; font-size: 10px; color: #000; font-weight: 700; }
+
+  /* LEARN SCREEN */
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .concept-tag {
+    display: inline-block;
+    background: var(--surface3);
+    color: var(--text2);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .concept-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 14px; line-height: 1.2; }
+  .concept-body { font-size: 15px; color: var(--text2); line-height: 1.7; }
+  .concept-body strong { color: var(--text); font-weight: 500; }
+  .concept-example {
+    background: var(--surface3);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--text2);
+    font-style: italic;
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap { background: var(--surface3); border-radius: 4px; height: 4px; margin-bottom: 8px; }
+  .progress-bar { background: var(--accent); height: 4px; border-radius: 4px; transition: width 0.4s; }
+  .progress-label { font-size: 12px; color: var(--text3); margin-bottom: 20px; }
+
+  /* QUIZ */
+  .quiz-question { font-family: 'DM Serif Display', serif; font-size: 22px; line-height: 1.3; margin-bottom: 24px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    color: var(--text);
+    text-align: left;
+    transition: all 0.2s;
+  }
+  .quiz-option:hover:not(:disabled) { border-color: var(--border2); background: var(--surface3); }
+  .quiz-option.correct { border-color: var(--accent); background: rgba(200,240,90,0.08); color: var(--accent); }
+  .quiz-option.wrong { border-color: var(--danger); background: rgba(245,90,90,0.08); color: var(--danger); }
+  .quiz-option:disabled { cursor: default; }
+
+  .quiz-feedback {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .quiz-feedback.correct { background: rgba(200,240,90,0.08); border: 1px solid rgba(200,240,90,0.2); color: var(--text2); }
+  .quiz-feedback.wrong { background: rgba(245,90,90,0.08); border: 1px solid rgba(245,90,90,0.2); color: var(--text2); }
+
+  /* BUTTONS */
+  .btn {
+    display: block; width: 100%;
+    background: var(--accent); color: #000;
+    border: none; border-radius: var(--radius-sm);
+    padding: 15px; font-size: 15px; font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer; transition: all 0.15s;
+    margin-top: 16px;
+  }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: scale(0.98); }
+  .btn-ghost {
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+  .stat-num { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--accent); }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; background: var(--surface2); padding: 4px; border-radius: var(--radius-sm); margin-bottom: 20px; }
+  .tab { flex: 1; padding: 8px; font-size: 13px; font-family: 'Outfit', sans-serif; border: none; background: none; color: var(--text2); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+  .tab.active { background: var(--surface3); color: var(--text); }
+
+  /* CHIP */
+  .chip { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); color: var(--text2); margin: 3px; cursor: pointer; transition: all 0.2s; }
+  .chip.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* BACK BTN */
+  .back-btn { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 14px; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; padding: 0; transition: color 0.2s; }
+  .back-btn:hover { color: var(--text); }
+
+  /* RESULT BANNER */
+  .result-banner { text-align: center; padding: 32px 20px; }
+  .result-emoji { font-size: 56px; margin-bottom: 12px; }
+  .result-title { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 8px; }
+  .result-sub { color: var(--text2); font-size: 15px; }
+
+  /* BADGE */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: rgba(200,240,90,0.12); color: var(--accent); }
+  .badge-blue { background: rgba(139,232,196,0.12); color: var(--accent2); }
+  .badge-orange { background: rgba(240,160,90,0.12); color: var(--accent3); }
+
+  .section-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; font-family: 'DM Mono', monospace; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 14px; }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--surface3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .topic-color-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+
+  /* ANIMATION */
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* HISTORY LIST */
+  .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .history-item:last-child { border-bottom: none; }
+  .history-topic { font-size: 14px; }
+  .history-score { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text2); }
+
+  .card-nav { display: flex; gap: 10px; margin-top: 16px; }
+  .card-nav .btn { margin-top: 0; }
+
+  /* COMPLETE CHECKMARK ANIMATION */
+  @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  .pop { animation: pop 0.3s ease; }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+  .empty-state p { margin-top: 8px; font-size: 14px; }
+
+  /* ---------- ADDED: daily subject chooser ---------- */
+  .choose-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 14px 20px 22px; z-index: 120;
+    display: none;
+  }
+  .choose-bar.show { display: block; }
+  .choose-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .topic-card.picked { border-color: var(--accent); background: var(--surface3); }
+  .topic-card.picked::after {
+    content: '✓'; position: absolute; top: 9px; right: 11px;
+    font-size: 12px; font-weight: 700; color: var(--accent);
+  }
+  .topic-card[aria-disabled="true"] { opacity: 0.35; cursor: default; }
+  .topic-card:focus-visible, .quiz-option:focus-visible, .btn:focus-visible,
+  .nav-btn:focus-visible, .chip:focus-visible, .back-btn:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  /* ---------- ADDED: content freshness ---------- */
+  .freshness {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 16px;
+  }
+  .freshness .section-label { margin-bottom: 0; }
+  .badge-dim { background: var(--surface3); color: var(--text3); }
+
+  /* ---------- ADDED: deep dive ---------- */
+  .dd-article { font-size: 15.5px; line-height: 1.75; color: var(--text2); }
+  .dd-article p { margin-bottom: 16px; }
+  .dd-article p:last-child { margin-bottom: 0; }
+  .dd-article strong { color: var(--text); font-weight: 500; }
+  .dd-article h3 {
+    font-family: 'DM Serif Display', serif; font-size: 19px;
+    color: var(--text); margin: 24px 0 10px; line-height: 1.3;
+  }
+  .dd-meta { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); margin-bottom: 18px; }
+  .dd-lock { text-align: center; padding: 36px 20px; }
+  .dd-lock .dd-day { font-family: 'DM Serif Display', serif; font-size: 24px; margin-bottom: 8px; }
+
+  /* ---------- ADDED: settings ---------- */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .field input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 13px;
+  }
+  .field input:focus { outline: none; border-color: var(--border2); }
+  .field .hint { font-size: 12px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+
+  .status-line {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text2); margin-bottom: 16px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot-on { background: var(--accent); }
+  .dot-off { background: var(--text3); }
+
+  .icon-btn {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    padding: 6px; line-height: 0; border-radius: 8px; transition: color 0.2s;
+  }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: 92px; z-index: 200;
+    background: var(--surface3); border: 1px solid var(--border2);
+    color: var(--text); font-size: 13px;
+    padding: 11px 18px; border-radius: 22px;
+    max-width: 90vw; text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .toast.show { opacity: 1; }
+
+  .err {
+    background: rgba(245,90,90,0.08); border: 1px solid rgba(245,90,90,0.2);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    font-size: 13.5px; line-height: 1.6; color: var(--text2); margin-bottom: 16px;
+  }
+  .err strong { color: var(--danger); font-weight: 500; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div id="screen-home" class="screen active">
+  <div class="header header-row">
+    <div>
+      <h1>Curious<br><em>Brain</em></h1>
+      <p>Daily learning. A-level depth.</p>
+    </div>
+    <button class="icon-btn" data-action="settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <div class="streak-banner" id="streak-banner">
+    <div>
+      <div class="streak-num" id="streak-num">0</div>
+      <div class="streak-label">day streak</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:13px; color:var(--text2);" id="today-label">Start today</div>
+      <div style="font-size:12px; color:var(--text3); margin-top:4px;" id="topics-done-label">0/3 done</div>
+    </div>
+    <div class="streak-fire">🔥</div>
+  </div>
+
+  <div id="home-main"></div>
+
+  <hr class="divider">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div class="section-label" style="margin-bottom:0;">All subjects</div>
+    <button class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px;margin-top:0;" data-action="browse">Browse all</button>
+  </div>
+  <div id="all-topics-preview" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+</div>
+
+<!-- CHOOSE TODAY'S THREE -->
+<div id="screen-choose" class="screen">
+  <button class="back-btn" data-action="nav" data-screen="screen-home">← Back</button>
+  <div class="header">
+    <h1>Today's <em>Three</em></h1>
+    <p id="choose-sub">Pick the three subjects you want today.</p>
+  </div>
+  <div id="choose-grid" class="topic-grid"></div>
+</div>
+
+<div class="choose-bar" id="choose-bar">
+  <div class="choose-count" id="choose-count">0 of 3 selected</div>
+  <button class="btn" id="choose-confirm" data-action="confirm-choice" style="margin-top:0;" disabled>Select three to continue</button>
+  <button class="btn btn-ghost" id="choose-repeat" data-action="repeat-choice" style="margin-top:8px;display:none;">Same as last time</button>
+</div>
+
+<!-- TOPIC PICKER (browse all) -->
+<div id="screen-picker" class="screen">
+  <button class="back-btn" data-action="nav" data-screen="screen-home">← Back</button>
+  <div class="header">
+    <h1>All <em>Subjects</em></h1>
+    <p>15 subjects at A-level depth</p>
+  </div>
+  <div id="picker-grid" class="topic-grid"></div>
+</div>
+
+<!-- LEARN SCREEN -->
+<div id="screen-learn" class="screen">
+  <button class="back-btn" id="learn-back" data-action="nav" data-screen="screen-home">← Back</button>
+  <div id="learn-content"></div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div id="screen-quiz" class="screen">
+  <button class="back-btn" data-action="back-from-quiz">← Back</button>
+  <div id="quiz-content"></div>
+</div>
+
+<!-- DEEP DIVE -->
+<div id="screen-deepdive" class="screen">
+  <div class="header">
+    <h1>Deep <em>Dive</em></h1>
+    <p>One long read, every Friday.</p>
+  </div>
+  <div id="deepdive-content"></div>
+</div>
+
+<!-- STATS SCREEN -->
+<div id="screen-stats" class="screen">
+  <div class="header">
+    <h1>Your <em>Progress</em></h1>
+    <p>Lifetime learning stats</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-streak">0</div>
+      <div class="stat-label">Day streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-label">Sessions done</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-correct">0%</div>
+      <div class="stat-label">Quiz accuracy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-topics">0</div>
+      <div class="stat-label">Subjects explored</div>
+    </div>
+  </div>
+
+  <div class="section-label">Recent sessions</div>
+  <div class="card" id="history-list">
+    <div class="empty-state"><p>No sessions yet. Start learning!</p></div>
+  </div>
+
+  <div class="section-label" style="margin-top:20px;">Mastery by subject</div>
+  <div id="mastery-grid" class="topic-grid"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="screen-settings" class="screen">
+  <button class="back-btn" data-action="nav" data-screen="screen-home">← Back</button>
+  <div class="header">
+    <h1>Fresh <em>Content</em></h1>
+    <p>Where each day's concepts come from.</p>
+  </div>
+
+  <div class="status-line" id="gen-status"></div>
+
+  <div class="card">
+    <div class="field">
+      <label for="cfg-proxy">Proxy endpoint</label>
+      <input id="cfg-proxy" type="url" spellcheck="false" autocomplete="off" placeholder="https://….supabase.co/functions/v1/anthropic-proxy">
+      <div class="hint">The Supabase edge function that holds the Anthropic key. Shredz already uses this one.</div>
+    </div>
+    <div class="field">
+      <label for="cfg-key">Supabase anon key</label>
+      <input id="cfg-key" type="password" spellcheck="false" autocomplete="off" placeholder="eyJ…">
+      <div class="hint">Sent as the Authorization header to the proxy. Stored only in this browser, never in the repo.</div>
+    </div>
+    <button class="btn" data-action="save-config">Save</button>
+    <button class="btn btn-ghost" data-action="test-config">Test connection</button>
+  </div>
+
+  <div class="section-label" style="margin-top:24px;">Offline behaviour</div>
+  <div class="card-sm" style="font-size:13.5px;line-height:1.6;color:var(--text2);">
+    With no proxy configured, or no signal, the app falls back to the 45 curated concepts already built in. Nothing breaks — you just get hand-written material instead of fresh.
+  </div>
+
+  <button class="btn btn-ghost" data-action="reset-today" style="margin-top:24px;">Re-pick today's subjects</button>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" id="nav-home" data-action="nav" data-screen="screen-home" data-nav="nav-home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" id="nav-learn" data-action="nav" data-screen="screen-picker" data-nav="nav-learn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    Learn
+  </button>
+  <button class="nav-btn" id="nav-deep" data-action="nav" data-screen="screen-deepdive" data-nav="nav-deep">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M4 20h16"/></svg>
+    Deep Dive
+  </button>
+  <button class="nav-btn" id="nav-stats" data-action="nav" data-screen="screen-stats" data-nav="nav-stats">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Progress
+  </button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+<script>
+const TOPICS = [
+  {
+    id: 'calculus', name: 'Calculus & Integration', icon: '∫', color: '#c8f05a',
+    concepts: [
+      { title: 'The Fundamental Theorem of Calculus', tag: 'Pure Maths', body: 'The FTC links differentiation and integration as inverse operations. <strong>Part 1</strong> states that if F is the antiderivative of f, then the definite integral from a to b equals F(b) − F(a). <strong>Part 2</strong> states that the derivative of an integral function is the original function itself.', example: 'If f(x) = x², then ∫₀³ x² dx = [x³/3]₀³ = 9 − 0 = 9. The area under a parabola from 0 to 3 is exactly 9 square units.' },
+      { title: 'Integration by Parts', tag: 'Pure Maths', body: 'Used when integrating a product of two functions. The formula is <strong>∫u dv = uv − ∫v du</strong>. Choose u using the LIATE rule: Logarithms, Inverse trig, Algebraic, Trigonometric, Exponential — pick the first type as u.', example: '∫x·eˣ dx: let u = x, dv = eˣ dx. Then du = dx, v = eˣ. Result: xeˣ − ∫eˣ dx = xeˣ − eˣ + C = eˣ(x−1) + C.' },
+      { title: 'Improper Integrals', tag: 'Pure Maths', body: 'Integrals over infinite limits or with discontinuities. <strong>Convergent</strong> integrals have a finite value; <strong>divergent</strong> ones do not. Evaluate by replacing the infinite bound with a variable limit and taking the limit as it approaches infinity.', example: '∫₁^∞ 1/x² dx = lim[t→∞] [−1/x]₁ᵗ = lim(−1/t + 1) = 1. Converges to 1. But ∫₁^∞ 1/x dx diverges (grows without bound).' }
+    ],
+    quiz: [
+      { q: '∫ x·cos(x) dx = ?', options: ['x·sin(x) + cos(x) + C', 'x·sin(x) − cos(x) + C', 'sin(x) + x·cos(x) + C', 'cos(x) − x·sin(x) + C'], correct: 0, explain: 'Using integration by parts with u = x, dv = cos(x)dx: gives x·sin(x) − ∫sin(x)dx = x·sin(x) + cos(x) + C.' },
+      { q: 'Which integral converges?', options: ['∫₁^∞ 1/x dx', '∫₁^∞ 1/√x dx', '∫₁^∞ 1/x² dx', '∫₁^∞ x dx'], correct: 2, explain: '∫₁^∞ 1/xⁿ converges only when n > 1. For 1/x², n = 2 > 1, so it converges to 1.' },
+      { q: 'By the FTC, d/dx[∫₀ˣ sin(t²) dt] = ?', options: ['cos(x²)', 'sin(x²)', '2x·sin(x²)', 'sin(x)'], correct: 1, explain: 'FTC Part 2: differentiating a definite integral with variable upper bound just gives the integrand evaluated at x, so the answer is sin(x²).' }
+    ]
+  },
+  {
+    id: 'mechanics', name: 'Newtonian Mechanics', icon: '⚙', color: '#f0a05a',
+    concepts: [
+      { title: "Newton's Laws & Momentum", tag: 'Physics', body: "Newton's second law in full generality: <strong>F = dp/dt</strong>, where p = mv is momentum. For constant mass this reduces to F = ma. The impulse-momentum theorem states that impulse J = FΔt = Δp, meaning a force applied over time changes an object's momentum.", example: 'A 0.5 kg ball changes velocity from 4 m/s to −2 m/s (bounces). Δp = 0.5(−2−4) = −3 N·s. If contact lasts 0.01s, average force = 300 N.' },
+      { title: 'Conservation of Energy', tag: 'Physics', body: 'Total mechanical energy E = KE + PE is conserved in the absence of non-conservative forces. <strong>KE = ½mv²</strong> and PE = mgh (gravitational) or ½kx² (elastic). When friction acts, work done by friction equals the energy lost: W_friction = ΔKE + ΔPE.', example: 'A 2 kg block slides down a 5 m frictionless ramp inclined at 30°. Height h = 2.5 m. v at bottom: ½(2)v² = 2(9.8)(2.5), so v = √49 = 7 m/s.' },
+      { title: 'Circular Motion & Centripetal Force', tag: 'Physics', body: 'For uniform circular motion, speed is constant but direction changes — so there is acceleration. <strong>Centripetal acceleration a = v²/r = ω²r</strong>, always directed towards the centre. The centripetal force F = mv²/r is provided by real forces (tension, gravity, normal force) — it is not a new force.', example: 'A 1200 kg car takes a bend of radius 40 m at 20 m/s. Required centripetal force = 1200 × 400/40 = 12,000 N, provided by friction.' }
+    ],
+    quiz: [
+      { q: 'A 3 kg object accelerates from 2 m/s to 8 m/s in 3 s. What net force acts?', options: ['2 N', '4 N', '6 N', '8 N'], correct: 2, explain: 'a = (8−2)/3 = 2 m/s². F = ma = 3 × 2 = 6 N.' },
+      { q: 'An object is in uniform circular motion. Its speed is:', options: ['Increasing', 'Decreasing', 'Constant', 'Zero'], correct: 2, explain: 'Uniform circular motion means constant speed — only direction changes. The centripetal acceleration is perpendicular to velocity, so it cannot change the magnitude of speed.' },
+      { q: 'A pendulum is released from height h. What is its speed at the bottom?', options: ['√(gh)', '√(2gh)', '2√(gh)', 'gh/2'], correct: 1, explain: 'Energy conservation: mgh = ½mv². Solving for v: v = √(2gh).' }
+    ]
+  },
+  {
+    id: 'organic_chem', name: 'Organic Chemistry', icon: '⬡', color: '#8be8c4',
+    concepts: [
+      { title: 'Nucleophilic Substitution (SN1 & SN2)', tag: 'Chemistry', body: '<strong>SN2</strong> is a one-step bimolecular mechanism — nucleophile attacks as leaving group departs, causing inversion of configuration (Walden inversion). Rate = k[substrate][nucleophile]. Favoured by primary substrates and polar aprotic solvents. <strong>SN1</strong> is two-step: carbocation intermediate forms first. Rate = k[substrate]. Favoured by tertiary substrates and polar protic solvents.', example: 'CH₃Br + OH⁻ → CH₃OH + Br⁻ proceeds via SN2 (primary substrate, strong nucleophile). (CH₃)₃CBr in water forms a stable 3° carbocation, then reacts (SN1).' },
+      { title: 'Electrophilic Aromatic Substitution', tag: 'Chemistry', body: 'Benzene undergoes substitution (not addition) to maintain aromaticity. Steps: <strong>1)</strong> electrophile attacks π system to form arenium ion (σ-complex), <strong>2)</strong> proton loss restores aromaticity. Activating groups (–NH₂, –OH, –alkyl) direct to ortho/para positions. Deactivating groups (–NO₂, –CHO) direct to meta.', example: 'Nitration of benzene: H₂SO₄ + HNO₃ generate NO₂⁺ (nitronium ion). This electrophile attacks benzene, giving nitrobenzene after proton loss.' },
+      { title: 'Carbonyl Chemistry & Aldehydes/Ketones', tag: 'Chemistry', body: 'The carbonyl group (C=O) is polarised — carbon is electrophilic (δ+). Nucleophiles attack the carbon. Key reactions: <strong>nucleophilic addition</strong> (HCN, NaBH₄, Grignard), <strong>condensation</strong> with amines (imines), and <strong>oxidation</strong> (aldehydes only — ketones resist oxidation).', example: 'Tollens\' reagent (Ag(NH₃)₂⁺) oxidises aldehydes to carboxylates, depositing silver mirror. Ketones give no reaction. This is a classic test to distinguish them.' }
+    ],
+    quiz: [
+      { q: 'Which substrate undergoes SN2 fastest?', options: ['(CH₃)₃CBr', '(CH₃)₂CHBr', 'CH₃CH₂Br', 'CH₃Br'], correct: 3, explain: 'SN2 rate decreases with steric hindrance. CH₃Br (methyl) has no branching — the nucleophile can attack freely. Tertiary substrates are slowest due to steric crowding.' },
+      { q: 'Which group directs to the meta position in EAS?', options: ['–OCH₃', '–CH₃', '–NO₂', '–OH'], correct: 2, explain: '–NO₂ is a deactivating, meta-directing group. It withdraws electron density through both induction and resonance, destabilising ortho/para intermediates more than meta.' },
+      { q: 'Which reagent would distinguish an aldehyde from a ketone?', options: ['Bromine water', 'Tollens\' reagent', 'Sodium hydroxide', 'Concentrated H₂SO₄'], correct: 1, explain: 'Tollens\' reagent oxidises aldehydes to carboxylates, producing a silver mirror. Ketones cannot be oxidised under these conditions and give no reaction.' }
+    ]
+  },
+  {
+    id: 'economics', name: 'Macroeconomics', icon: '📈', color: '#d8a5f5',
+    concepts: [
+      { title: 'The Keynesian Multiplier', tag: 'Economics', body: 'An injection into the economy (e.g. government spending) generates a larger final increase in national income. The <strong>multiplier k = 1/(1−MPC) = 1/MPS</strong>. MPC is the marginal propensity to consume — how much of extra income is spent. Higher MPC → larger multiplier effect because money circulates more.', example: 'If MPC = 0.8, multiplier = 1/0.2 = 5. Government spends £10bn → national income rises by £50bn, assuming no leakages beyond savings.' },
+      { title: 'Monetary Policy & the IS-LM Framework', tag: 'Economics', body: 'IS curve: combinations of income and interest rates where the goods market clears. LM curve: where money market clears. A cut in interest rates shifts LM right, raising output. Fiscal expansion shifts IS right. The <strong>liquidity trap</strong>: at near-zero rates, monetary policy loses traction — increasing money supply fails to stimulate spending.', example: 'Japan in the 1990s and the post-2008 West both hit liquidity traps. Central banks cut rates to ~0%, yet output remained depressed, necessitating fiscal stimulus.' },
+      { title: 'Phillips Curve & Stagflation', tag: 'Economics', body: 'The original Phillips Curve proposed a <strong>stable inverse relationship</strong> between inflation and unemployment. However, the 1970s oil shocks caused simultaneous high inflation and high unemployment (stagflation), destroying the naive trade-off. Friedman & Phelps proposed the expectations-augmented Phillips Curve — in the long run, the curve is vertical at the Natural Rate of Unemployment (NAIRU).', example: 'If workers expect 5% inflation, they demand higher wages, pushing up costs regardless of unemployment level. Only unexpected inflation creates temporary trade-offs.' }
+    ],
+    quiz: [
+      { q: 'If MPS = 0.25, what is the Keynesian multiplier?', options: ['2.5', '4', '0.75', '1.25'], correct: 1, explain: 'Multiplier = 1/MPS = 1/0.25 = 4. Each £1 of injection ultimately generates £4 of national income.' },
+      { q: 'The long-run Phillips Curve is:', options: ['Downward sloping', 'Upward sloping', 'Horizontal', 'Vertical'], correct: 3, explain: 'In the long run, any attempt to push unemployment below the NAIRU simply raises inflation without reducing unemployment — hence the curve is vertical at the natural rate.' },
+      { q: 'Which best describes a liquidity trap?', options: ['Banks refuse to lend', 'Households hoard savings regardless of interest rates', 'Firms invest heavily despite low rates', 'Government spending crowds out private investment'], correct: 1, explain: 'In a liquidity trap, people prefer holding cash over bonds even at near-zero rates. Monetary policy becomes ineffective — money injected sits idle rather than stimulating spending.' }
+    ]
+  },
+  {
+    id: 'statistics', name: 'Statistical Inference', icon: 'σ', color: '#f05a8b',
+    concepts: [
+      { title: 'Hypothesis Testing', tag: 'Statistics', body: 'A formal procedure to decide whether data is consistent with a null hypothesis H₀. Steps: state H₀ and H₁, choose significance level α, calculate test statistic, find p-value, compare to α. <strong>Type I error</strong>: rejecting a true H₀ (false positive). <strong>Type II error</strong>: failing to reject a false H₀ (false negative). Power = 1 − P(Type II error).', example: 'Testing if a coin is fair: H₀: p = 0.5. Flip 100 times, get 65 heads. Z = (65−50)/√25 = 3.0. p-value ≈ 0.003 < 0.05, so we reject H₀.' },
+      { title: 'Confidence Intervals', tag: 'Statistics', body: 'A 95% CI means: if we repeated sampling infinitely, 95% of computed intervals would contain the true parameter. The interval is <strong>x̄ ± z* × (σ/√n)</strong> for known variance, or using t-distribution for unknown σ. Wider intervals = less precision; narrower = more. Increasing n always narrows the CI.', example: 'Sample mean = 70, σ = 10, n = 25. 95% CI: 70 ± 1.96 × (10/5) = 70 ± 3.92, so [66.08, 73.92].' },
+      { title: 'The Central Limit Theorem', tag: 'Statistics', body: 'Regardless of the population distribution, the sampling distribution of the sample mean approaches a <strong>normal distribution</strong> as sample size n increases (typically n ≥ 30). Mean of sampling distribution = μ. Standard error = σ/√n. This underpins virtually all parametric inference.', example: 'Rolling a single die: uniform distribution. Average of 50 rolls: near-normal around 3.5, with SE = √(2.917/50) ≈ 0.24. The CLT lets us apply z-tests.' }
+    ],
+    quiz: [
+      { q: 'A p-value of 0.03 with α = 0.05 means we should:', options: ['Fail to reject H₀', 'Reject H₀', 'Accept H₁ as proven', 'Increase the sample size'], correct: 1, explain: 'p < α (0.03 < 0.05), so we reject H₀. Note: we never "accept" H₁ — we only have evidence against H₀.' },
+      { q: 'Quadrupling sample size n changes the standard error by:', options: ['Doubles it', 'Halves it', 'Quarters it', 'No change'], correct: 1, explain: 'SE = σ/√n. If n → 4n, SE → σ/√(4n) = σ/(2√n) = half the original SE.' },
+      { q: 'Which is a Type I error?', options: ['Failing to detect a real effect', 'Detecting an effect that does not exist', 'Using the wrong test statistic', 'Having too small a sample'], correct: 1, explain: 'Type I error = false positive = rejecting a true null hypothesis. The significance level α is exactly the probability of making this error.' }
+    ]
+  },
+  {
+    id: 'genetics', name: 'Genetics & Molecular Biology', icon: '🧬', color: '#5af0c8',
+    concepts: [
+      { title: 'DNA Replication & Proofreading', tag: 'Biology', body: 'Replication is <strong>semi-conservative</strong>: each new double helix has one old and one new strand. Key enzymes: helicase (unwinds), primase (RNA primer), DNA polymerase III (adds nucleotides 5\'→3\' only), DNA polymerase I (replaces primer), ligase (seals gaps). <strong>Proofreading</strong> by DNA pol III has 3\'→5\' exonuclease activity — error rate drops to ~1 in 10⁹ bases.', example: 'The lagging strand must be synthesised in fragments (Okazaki fragments) because polymerase can only add to an existing 3\'-OH, but the template runs 3\'→5\'.' },
+      { title: 'Transcription, Translation & the Genetic Code', tag: 'Biology', body: 'Transcription: RNA polymerase reads template strand 3\'→5\', producing mRNA 5\'→3\'. In eukaryotes, pre-mRNA undergoes splicing (introns removed), 5\' capping, and 3\' poly-A tail addition. Translation: ribosomes read codons (triplets). The code is <strong>degenerate</strong> (multiple codons per amino acid), <strong>unambiguous</strong> (each codon specifies exactly one AA), and nearly <strong>universal</strong>.', example: 'UGA is normally a stop codon but codes for selenocysteine in some proteins — one of very few exceptions to the universal genetic code.' },
+      { title: 'Gene Regulation: Operons & Epigenetics', tag: 'Biology', body: 'Prokaryotes use operons: the <strong>lac operon</strong> has a repressor that binds the operator in absence of lactose, blocking transcription. In eukaryotes, gene expression is regulated by transcription factors, enhancers, and <strong>epigenetic</strong> mechanisms — histone acetylation (loosens chromatin, activates genes) and DNA methylation of CpG sites (typically silences genes).', example: 'Cancer can arise when tumour suppressor genes are silenced by CpG methylation — an epigenetic mechanism that doesn\'t alter the DNA sequence but switches off protective genes.' }
+    ],
+    quiz: [
+      { q: 'Why are Okazaki fragments formed?', options: ['Helicase works in both directions', 'DNA polymerase can only add nucleotides in the 5\'→3\' direction', 'RNA primers are unstable', 'Ligase works too slowly'], correct: 1, explain: 'DNA polymerase can only extend a chain 5\'→3\'. On the lagging strand (which runs 3\'→5\' relative to the replication fork), synthesis must occur in fragments moving away from the fork.' },
+      { q: 'Histone acetylation typically:', options: ['Silences gene expression', 'Activates gene expression', 'Causes DNA methylation', 'Removes introns'], correct: 1, explain: 'Acetylation neutralises the positive charge on histones, reducing their affinity for negatively charged DNA. Chromatin loosens, allowing transcription factors access — genes are activated.' },
+      { q: 'The genetic code is degenerate — this means:', options: ['Some codons have no meaning', 'Multiple codons can code for the same amino acid', 'The same codon can mean different amino acids', 'Stop codons are unreliable'], correct: 1, explain: 'Degenerate means many-to-one: 64 codons but only 20 amino acids (+3 stops). For example, leucine is encoded by 6 different codons.' }
+    ]
+  },
+  {
+    id: 'philosophy', name: 'Philosophy of Mind', icon: '🧠', color: '#a5d8f5',
+    concepts: [
+      { title: 'The Mind-Body Problem', tag: 'Philosophy', body: 'How does the physical brain give rise to subjective experience? Key positions: <strong>Substance dualism</strong> (Descartes) — mind and body are distinct substances; <strong>physicalism</strong> — mental states are physical states; <strong>property dualism</strong> — one substance (brain) but mental properties are irreducible to physical ones; <strong>epiphenomenalism</strong> — mental events are caused by physical events but have no causal power themselves.', example: 'If you feel pain (mental), and withdraw your hand (physical), epiphenomenalism says the pain didn\'t cause the withdrawal — the brain state did, and pain was just a by-product.' },
+      { title: "Searle's Chinese Room Argument", tag: 'Philosophy', body: "Searle argues that <strong>syntax is not sufficient for semantics</strong>: a system following symbol-manipulation rules can pass a Turing Test without understanding. A person in a room follows Chinese symbol rules, producing correct outputs, but understands nothing. Therefore, computational symbol processing cannot produce genuine understanding or intentionality — AI is mere simulation.", example: 'The systems reply objects: the room as a system understands Chinese. Searle counters: internalise the rules — still no understanding, just fast symbol manipulation.' },
+      { title: 'Consciousness & the Hard Problem', tag: 'Philosophy', body: "Chalmers distinguishes <strong>easy problems</strong> (explaining cognitive functions — attention, memory, reporting) from the <strong>hard problem</strong>: why is there subjective experience at all? Why does neural processing feel like anything? Physicalist theories explain function but seemingly skip over qualia — the 'what it is like' aspect. Philosophical zombies (p-zombies) are conceivable beings physically identical to humans but with no inner experience.", example: 'Mary\'s Room: Mary knows all physical facts about colour vision but has only seen grey. When she sees red, does she learn something new? If yes, physicalism may be incomplete.' }
+    ],
+    quiz: [
+      { q: 'Descartes\' substance dualism holds that mind and body are:', options: ['The same substance', 'Two distinct substances', 'Both illusions', 'Physical but at different scales'], correct: 1, explain: 'Descartes held res cogitans (thinking substance) and res extensa (extended substance) are fundamentally different — hence substance dualism. The interaction problem: how does non-physical mind move physical body?' },
+      { q: 'The "hard problem" of consciousness is about:', options: ['Why brains process information', 'Why there is subjective experience', 'How neurons communicate', 'The limits of scientific measurement'], correct: 1, explain: 'Chalmers\' hard problem asks why any physical process feels like anything — why there are qualia. Easy problems are about cognitive function; the hard problem is about subjective experience.' },
+      { q: 'What does Searle\'s Chinese Room aim to show?', options: ['Machines will eventually become conscious', 'Syntax alone cannot produce semantics', 'Understanding is purely functional', 'Turing Tests are reliable measures of intelligence'], correct: 1, explain: 'Searle argues that mechanically manipulating symbols — however sophisticated — cannot produce genuine understanding. The room outputs correct Chinese without understanding a word.' }
+    ]
+  },
+  {
+    id: 'linear_algebra', name: 'Linear Algebra', icon: '⊞', color: '#f5e45a',
+    concepts: [
+      { title: 'Eigenvalues & Eigenvectors', tag: 'Maths', body: 'For matrix A, a non-zero vector v is an eigenvector if <strong>Av = λv</strong>, where λ is the eigenvalue. Geometrically, A merely scales v without rotating it. Find eigenvalues via the characteristic equation: det(A − λI) = 0. Then substitute each λ back to find the eigenvector.', example: 'A = [[2,1],[1,2]]. det(A−λI) = (2−λ)²−1 = 0 → λ = 1 or λ = 3. Eigenvectors: [1,−1] for λ=1, [1,1] for λ=3.' },
+      { title: 'Matrix Transformations & Determinants', tag: 'Maths', body: 'A matrix represents a linear transformation of space. The <strong>determinant</strong> measures the signed area (2D) or volume (3D) scaling factor. |det| > 1: expansion; |det| < 1: compression; det = 0: the transformation collapses space (matrix is singular, non-invertible); det < 0: orientation reversal.', example: 'det([[3,0],[0,2]]) = 6 — a rectangle scaled 3× horizontally and 2× vertically has 6× the area. det([[1,2],[2,4]]) = 0 — these columns are parallel, so the matrix is singular.' },
+      { title: 'Vector Spaces & Linear Independence', tag: 'Maths', body: 'A <strong>vector space</strong> is a set closed under addition and scalar multiplication. A <strong>basis</strong> is a minimal set of linearly independent vectors that span the space. The number of basis vectors = dimension. Vectors are linearly independent if no vector can be written as a linear combination of the others (equivalently, the only solution to c₁v₁+...+cₙvₙ=0 is all cᵢ=0).', example: 'In ℝ², {[1,0],[0,1]} is the standard basis. {[1,1],[1,−1]} is also a basis (independent, spans ℝ²). {[1,1],[2,2]} is NOT a basis — linearly dependent.' }
+    ],
+    quiz: [
+      { q: 'If Av = 3v, then 3 is the ___ corresponding to v:', options: ['Determinant', 'Eigenvalue', 'Trace', 'Rank'], correct: 1, explain: 'By definition, eigenvalues satisfy Av = λv. Here λ = 3 is the eigenvalue — v is the eigenvector, which A scales by factor 3 without changing direction.' },
+      { q: 'A matrix with determinant 0 is:', options: ['Orthogonal', 'Invertible', 'Singular', 'Diagonal'], correct: 2, explain: 'det = 0 means the matrix collapses space — the transformation is not invertible. Such matrices are called singular. You cannot find A⁻¹ when det(A) = 0.' },
+      { q: 'Three vectors in ℝ² must be:', options: ['Linearly independent', 'Linearly dependent', 'A basis', 'Orthogonal'], correct: 1, explain: 'ℝ² has dimension 2, so any set of 3 vectors must be linearly dependent — at least one can be written as a combination of the others. You cannot have 3 independent vectors in 2D space.' }
+    ]
+  },
+  {
+    id: 'history', name: 'Cold War & Geopolitics', icon: '🌐', color: '#f5a55a',
+    concepts: [
+      { title: 'Containment & the Truman Doctrine', tag: 'History', body: "George Kennan's 1946 Long Telegram and 1947 X Article articulated <strong>containment</strong>: the US should prevent Soviet expansion without direct war. The Truman Doctrine (1947) operationalised this — $400m to Greece and Turkey, framing US foreign policy as global support for 'free peoples' against communist subjugation. This began the shift from isolationism to global US hegemony.", example: 'The Marshall Plan (1948) extended containment economically — $13bn to rebuild Western Europe, making communist appeal less attractive to impoverished populations.' },
+      { title: 'Mutually Assured Destruction & Nuclear Strategy', tag: 'History', body: '<strong>MAD</strong>: if both superpowers possess second-strike capability, neither can launch without facing certain annihilation. This paradoxically creates stability — rational actors will not initiate. Key concepts: first-strike (pre-emptive attack), second-strike (retaliatory), ICBM triads (land/sea/air). The 1962 Cuban Missile Crisis was the closest MAD logic was tested.', example: 'Khrushchev placed missiles in Cuba partly to equalise first-strike vulnerability. Kennedy\'s EXCOMM rejected an air strike — risking the Soviet second strike on the US mainland.' },
+      { title: 'Détente & the Helsinki Accords', tag: 'History', body: "Détente (1969–79): Nixon/Kissinger's policy of managing superpower competition through engagement. Key events: SALT I (1972) — first strategic arms limitation, Nixon visits China (1972) — exploiting Sino-Soviet split, Helsinki Accords (1975) — recognised post-war borders but also enshrined human rights norms that dissidents used against Soviet states. Détente collapsed with the Soviet invasion of Afghanistan (1979).", example: 'Helsinki Basket III on human rights gave Soviet dissidents legal language to challenge the regime — an unintended consequence that contributed to eventual Soviet collapse.' }
+    ],
+    quiz: [
+      { q: 'Kennan\'s "X Article" argued the US should pursue:', options: ['Rollback of communism', 'Isolationism', 'Containment', 'Détente'], correct: 2, explain: 'Kennan argued Soviet expansion should be contained — met with firm counter-pressure wherever it threatened to advance — rather than rolled back (too aggressive) or ignored (isolationism).' },
+      { q: 'MAD requires that both sides have:', options: ['Equal nuclear arsenals', 'First-strike capability', 'Second-strike capability', 'Allied nuclear sharing'], correct: 2, explain: 'MAD works only if both sides can absorb a first strike and still retaliate devastatingly. Without second-strike capability, a pre-emptive first strike becomes rational.' },
+      { q: 'Which event ended the period of Détente?', options: ['Vietnam War end', 'Helsinki Accords', 'Soviet invasion of Afghanistan', 'SALT II talks'], correct: 2, explain: 'The Soviet invasion of Afghanistan (1979) shattered détente. Carter withdrew SALT II from Senate ratification, began US aid to Afghan mujahideen, and the Cold War entered its final intense phase.' }
+    ]
+  },
+  {
+    id: 'finance', name: 'Corporate Finance', icon: '💹', color: '#c8f05a',
+    concepts: [
+      { title: 'Time Value of Money & DCF', tag: 'Finance', body: 'A pound today is worth more than a pound tomorrow — because it can be invested. <strong>Future Value = PV × (1+r)ⁿ</strong>. Discounted Cash Flow (DCF) values an asset as the sum of its future cash flows discounted back: <strong>PV = CF/(1+r)ⁿ</strong>. The discount rate reflects the opportunity cost of capital and risk.', example: 'Project generating £50k/yr for 5 years at 10% discount rate: PV = 50/(1.1) + 50/(1.1)² +...+ 50/(1.1)⁵ = £189,539. Compare to investment cost to find NPV.' },
+      { title: 'Capital Structure & Modigliani-Miller', tag: 'Finance', body: 'M&M Theorem (1958): in a perfect market (no taxes, no bankruptcy costs, perfect information), capital structure is <strong>irrelevant</strong> — firm value is independent of how it is financed. In reality, the <strong>tax shield</strong> on debt increases firm value (interest is tax-deductible), but too much debt creates financial distress costs. The trade-off theory finds an optimal D/E ratio balancing these.', example: 'A firm with £1m debt at 5% saves £50k × tax rate = £15k (at 30% tax) per year in taxes. PV of tax shield = 50k × 0.3 / 0.05 = £300k.' },
+      { title: 'CAPM & the Efficient Market Hypothesis', tag: 'Finance', body: 'CAPM: <strong>E(Rᵢ) = Rƒ + βᵢ(E(Rₘ) − Rƒ)</strong>. Expected return = risk-free rate + beta × market risk premium. Beta measures systematic risk (cannot be diversified away). EMH (Fama): prices reflect all available information. Weak form: price history is priced in. Semi-strong: all public info is priced in. Strong: all private info too.', example: 'Stock β = 1.5, Rƒ = 3%, market return = 8%. CAPM: E(R) = 3 + 1.5(8−3) = 10.5%. This is the minimum return required to justify holding the stock.' }
+    ],
+    quiz: [
+      { q: 'A project costs £100k and returns £120k in 2 years. At 10% discount rate, NPV is:', options: ['£20k', '−£0.83k', '£9.09k', '£2.5k'], correct: 1, explain: 'PV of £120k in 2 years = 120/(1.1)² = 120/1.21 = £99,174. NPV = 99,174 − 100,000 = −£826 ≈ −£0.83k. Don\'t do this project!' },
+      { q: 'The M&M tax shield benefit arises because:', options: ['Equity is cheaper than debt', 'Debt interest is tax-deductible', 'Debt holders take less risk', 'Equity reduces agency costs'], correct: 1, explain: 'Interest payments reduce taxable profit, creating a tax shield. This makes debt financing genuinely valuable (increases firm value) in a world with corporate taxes.' },
+      { q: 'A stock with β = 0.5 is:', options: ['More volatile than the market', 'As volatile as the market', 'Less volatile than the market', 'Risk-free'], correct: 2, explain: 'Beta of 0.5 means the stock moves about half as much as the market — less systematic risk. It\'s not risk-free (β = 0 would be), but it\'s a defensive stock.' }
+    ]
+  },
+  {
+    id: 'quantum', name: 'Quantum Physics', icon: '⚛', color: '#a5d8f5',
+    concepts: [
+      { title: 'Wave-Particle Duality & de Broglie', tag: 'Physics', body: 'Light behaves as waves (interference, diffraction) and particles (photoelectric effect). de Broglie proposed matter also has wave nature: <strong>λ = h/mv = h/p</strong>. The wave nature of electrons was confirmed by Davisson-Germer (1927), who observed electron diffraction. Larger objects have wavelengths too tiny to observe — quantum effects vanish at macroscopic scales.', example: 'An electron (m = 9.1×10⁻³¹ kg) at 10⁶ m/s: λ = 6.63×10⁻³⁴ / (9.1×10⁻³¹ × 10⁶) ≈ 7.3×10⁻¹⁰ m (atomic scale — observable!).' },
+      { title: "Heisenberg's Uncertainty Principle", tag: 'Physics', body: 'It is fundamentally impossible to simultaneously know both position and momentum to arbitrary precision: <strong>ΔxΔp ≥ ℏ/2</strong>. This is not a measurement limitation but an intrinsic property of quantum systems. Similarly, ΔEΔt ≥ ℏ/2 allows "virtual particles" to briefly violate energy conservation — the basis of quantum tunnelling.', example: 'Confining an electron to a 0.1 nm box: Δx = 10⁻¹⁰ m, so Δp ≥ 5.3×10⁻²⁵ kg·m/s. The resulting kinetic energy uncertainty ≈ 3.8 eV — this is why electrons don\'t collapse into nuclei.' },
+      { title: 'Atomic Orbitals & Quantum Numbers', tag: 'Physics', body: 'Electron states in an atom are described by four quantum numbers: <strong>n</strong> (principal — energy level), <strong>l</strong> (angular momentum — subshell shape: s,p,d,f), <strong>mₗ</strong> (magnetic — orbital orientation), <strong>ms</strong> (spin: +½ or −½). The Pauli Exclusion Principle: no two electrons in the same atom can have identical sets of all four quantum numbers.', example: 'The 2p subshell: n=2, l=1. Three values of mₗ (−1,0,+1) give three orbitals, each holding 2 electrons (spin ±½). Total: 6 electrons in 2p, as seen in the periodic table.' }
+    ],
+    quiz: [
+      { q: 'de Broglie\'s wavelength formula is:', options: ['λ = hf', 'λ = h/p', 'λ = mc²', 'λ = hc/E'], correct: 1, explain: 'de Broglie proposed λ = h/p = h/(mv) for matter waves. Larger momentum → shorter wavelength → less observable wave behaviour. This explains why only subatomic particles show quantum effects.' },
+      { q: 'Heisenberg\'s Uncertainty Principle says we cannot simultaneously know:', options: ['Speed and mass', 'Position and momentum', 'Charge and spin', 'Energy and mass'], correct: 1, explain: 'ΔxΔp ≥ ℏ/2: the more precisely we know position (Δx small), the more uncertain momentum must be (Δp large), and vice versa. This is fundamental, not a measurement error.' },
+      { q: 'How many electrons can the 3d subshell hold?', options: ['2', '6', '10', '14'], correct: 2, explain: '3d: n=3, l=2. l=2 gives mₗ = −2,−1,0,+1,+2 — five orbitals. Each holds 2 electrons (spin ±½). Total: 10 electrons.' }
+    ]
+  },
+  {
+    id: 'rhetoric', name: 'Rhetoric & Argumentation', icon: '⚖', color: '#f5d45a',
+    concepts: [
+      { title: 'Aristotle\'s Three Appeals', tag: 'English', body: "Aristotle identified three modes of persuasion: <strong>Logos</strong> (logical argument — evidence, statistics, syllogisms), <strong>Ethos</strong> (credibility of the speaker — expertise, trustworthiness, character), and <strong>Pathos</strong> (emotional appeal — arousing fear, sympathy, indignation in the audience). Effective rhetoric combines all three; relying only on pathos is manipulative, only on logos is cold and unpersuasive.", example: 'Churchill\'s wartime speeches: logos (strategic military reality), ethos (proven war leader), pathos ("we shall fight on the beaches"). The combination made them irresistible.' },
+      { title: 'Logical Fallacies', tag: 'English', body: 'Common fallacies to identify and avoid: <strong>Ad hominem</strong> (attacking the person, not argument), <strong>straw man</strong> (misrepresenting opponent\'s position), <strong>false dichotomy</strong> (presenting only two options when more exist), <strong>appeal to authority</strong> (expert says X therefore X), <strong>slippery slope</strong> (A will inevitably lead to catastrophe, ignoring intermediate steps), <strong>post hoc ergo propter hoc</strong> (A preceded B, therefore A caused B).', example: '"We can\'t trust Smith\'s economic policy because he\'s been divorced twice." — Ad hominem. Personal life is irrelevant to policy quality.' },
+      { title: 'The Toulmin Model of Argument', tag: 'English', body: 'Toulmin\'s model breaks arguments into: <strong>Claim</strong> (what you assert), <strong>Grounds/Data</strong> (evidence), <strong>Warrant</strong> (the logical bridge connecting data to claim), <strong>Backing</strong> (support for the warrant), <strong>Qualifier</strong> (degree of certainty), and <strong>Rebuttal</strong> (exceptions/counter-arguments). Exposing hidden warrants often dismantles weak arguments.', example: 'Claim: "We should lower the voting age to 16." Grounds: 16-year-olds pay tax and are tried as adults. Warrant: those affected by laws should vote on them. Rebuttal: cognitive development may not be complete.' }
+    ],
+    quiz: [
+      { q: '"You can\'t trust her views on climate change — she flies private jets." This is an example of:', options: ['Straw man', 'Ad hominem', 'False dichotomy', 'Appeal to authority'], correct: 1, explain: 'Ad hominem attacks the person rather than their argument. Her hypocrisy might be worth noting separately, but it doesn\'t logically invalidate her climate claims, which should be evaluated on their own merits.' },
+      { q: 'In the Toulmin model, a "warrant" is:', options: ['The main claim being made', 'Evidence supporting the claim', 'The logical bridge connecting data to claim', 'An admitted exception to the argument'], correct: 2, explain: 'The warrant is the often-unstated assumption that makes the data relevant to the claim. Exposing warrants is powerful in debate — an argument collapses if its warrant is rejected.' },
+      { q: 'Which appeal does quoting peer-reviewed research primarily use?', options: ['Pathos', 'Ethos', 'Logos', 'Both ethos and logos'], correct: 3, explain: 'Peer-reviewed research appeals to logos (statistical evidence, logical demonstration) AND ethos (credibility of scientific authority). In practice, strong arguments blend multiple appeals.' }
+    ]
+  },
+  {
+    id: 'computing', name: 'Algorithms & Complexity', icon: 'λ', color: '#8be8c4',
+    concepts: [
+      { title: 'Big O Notation & Complexity Classes', tag: 'Computing', body: 'Big O describes algorithm growth rate as input size n → ∞. Common classes (fastest to slowest): O(1) constant, O(log n) logarithmic, O(n) linear, O(n log n) linearithmic, O(n²) quadratic, O(2ⁿ) exponential. <strong>P</strong> = problems solvable in polynomial time. <strong>NP</strong> = solutions verifiable in polynomial time. P vs NP: is P = NP? The greatest open problem in CS.', example: 'Binary search is O(log n): searching 1 billion items takes ~30 steps. Linear search is O(n): takes 1 billion steps worst case. This is the power of algorithmic thinking.' },
+      { title: 'Sorting Algorithms & Their Trade-offs', tag: 'Computing', body: '<strong>Merge sort</strong>: O(n log n) always — divides array, sorts halves, merges. Stable, predictable but requires O(n) extra space. <strong>Quicksort</strong>: O(n log n) average, O(n²) worst case — pivots partition array. In-place, fast in practice, but unstable. <strong>Heapsort</strong>: O(n log n) guaranteed, O(1) space. Comparison-based sorts cannot do better than O(n log n) — proven by decision tree argument.', example: 'Python\'s Timsort is a hybrid: merge sort + insertion sort, exploiting real-world data that is often partially sorted. It achieves O(n) on nearly-sorted data.' },
+      { title: 'Dynamic Programming', tag: 'Computing', body: 'DP solves problems by breaking them into overlapping subproblems and storing results (memoisation). Two approaches: <strong>top-down</strong> (recursion + cache) and <strong>bottom-up</strong> (fill table iteratively). Applicable when problems have optimal substructure (optimal solution uses optimal sub-solutions) and overlapping subproblems (same sub-problems solved repeatedly).', example: 'Fibonacci: naïve recursion is O(2ⁿ). With memoisation: O(n). The 0-1 Knapsack problem: naïve brute force O(2ⁿ), DP solution O(nW) — massive practical improvement.' }
+    ],
+    quiz: [
+      { q: 'Which sorting algorithm guarantees O(n log n) with O(1) extra space?', options: ['Merge sort', 'Quicksort', 'Heapsort', 'Timsort'], correct: 2, explain: 'Heapsort: worst case O(n log n), best case O(n log n), space O(1). Merge sort requires O(n) space. Quicksort is O(n²) worst case. Heapsort is the only comparison sort with both guarantees.' },
+      { q: 'Dynamic programming requires:', options: ['Greedy choices at each step', 'Optimal substructure and overlapping subproblems', 'A sorted input', 'Linear time complexity'], correct: 1, explain: 'DP applies when (1) optimal solutions to sub-problems compose into overall optimal solution, and (2) the same sub-problems recur many times — making caching worthwhile.' },
+      { q: 'Binary search requires the input to be:', options: ['Unsorted', 'Sorted', 'Numerically small', 'Stored as a hash'], correct: 1, explain: 'Binary search exploits sorted order to eliminate half the search space at each step, achieving O(log n). On unsorted data it doesn\'t work — you can\'t determine which half contains the target.' }
+    ]
+  },
+  {
+    id: 'music_theory', name: 'Advanced Music Theory', icon: '♪', color: '#d8a5f5',
+    concepts: [
+      { title: 'Functional Harmony & Chromaticism', tag: 'Music', body: 'Tonal harmony organises around <strong>tonic (I), subdominant (IV), and dominant (V)</strong>. The dominant seventh chord (V⁷) creates strong pull to I through its tritone (leading note + 4th). <strong>Chromaticism</strong> introduces notes outside the key: secondary dominants (V/V), borrowed chords (from parallel minor/major), Neapolitan sixth (♭II⁶), and augmented sixth chords create colour and intensify cadences.', example: 'Beethoven\'s Moonlight Sonata opens with a ♯iv° (diminished chord on ♯4) in C♯ minor — a chromatically borrowed chord creating dark tension before resolving.' },
+      { title: 'Counterpoint & Voice Leading', tag: 'Music', body: 'Counterpoint is the art of combining independent melodic lines. <strong>Species counterpoint</strong> (Fux) teaches voice leading through five species: note-against-note (1:1), two-against-one (2:1), etc. Key principles: <strong>contrary motion</strong> (voices move in opposite directions) preferred over parallel; avoid consecutive (parallel) perfect 5ths and octaves; resolve tendency tones (leading note → tonic, 7th → 6th).', example: 'The prohibition on parallel 5ths: if two voices both move up a step while a 5th apart, the interval quality is preserved and voices lose independence — they sound like one thickened voice.' },
+      { title: 'Modes, Serialism & 20th Century Harmony', tag: 'Music', body: 'Church modes (Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian) each have distinct character from their half-step placement. <strong>Twelve-tone serialism</strong> (Schoenberg): a row using all 12 pitches equally, subjected to transposition (T), inversion (I), retrograde (R), retrograde-inversion (RI). Removes tonal hierarchy — every pitch is equal. <strong>Polytonality</strong> (Stravinsky) superimposes two keys simultaneously.', example: 'Dorian mode (D-E-F-G-A-B-C-D) has a raised 6th compared to natural minor — characteristic sound of modal jazz (So What, Miles Davis).' }
+    ],
+    quiz: [
+      { q: 'A Neapolitan sixth chord is built on:', options: ['The raised 4th degree', 'The flattened 2nd degree', 'The raised 7th degree', 'The flattened 6th degree'], correct: 1, explain: 'The Neapolitan (♭II⁶) is a major chord built on the lowered 2nd scale degree, presented in first inversion. It\'s a pre-dominant chord (leads to V) with a particularly sombre quality.' },
+      { q: 'In species counterpoint, parallel perfect 5ths between voices are:', options: ['Encouraged for richness', 'Prohibited', 'Allowed only in contrary motion', 'Only permitted in 3rd species'], correct: 1, explain: 'Consecutive (parallel) 5ths make voices lose their independence — they sound fused rather than distinct. This breaks the fundamental goal of counterpoint: independent melodic lines.' },
+      { q: 'Twelve-tone serialism\'s core principle is:', options: ['Use only natural minor scales', 'Use all 12 pitches equally before repeating any', 'Use only consonant intervals', 'Avoid any rhythmic pattern'], correct: 1, explain: 'Schoenberg\'s row technique requires all 12 chromatic pitches to appear before any is repeated, ensuring no pitch hierarchy. This aimed to free music from tonal gravity entirely.' }
+    ]
+  },
+  {
+    id: 'climate', name: 'Climate Science', icon: '🌍', color: '#5af0a0',
+    concepts: [
+      { title: 'Radiative Forcing & Greenhouse Effect', tag: 'Science', body: 'The <strong>greenhouse effect</strong>: solar shortwave radiation penetrates the atmosphere; Earth emits longwave (infrared) radiation, which is absorbed and re-emitted by greenhouse gases (CO₂, CH₄, N₂O, H₂O). <strong>Radiative forcing</strong> (W/m²) measures the energy imbalance caused by a perturbation. Positive forcing = warming. CO₂ has increased from 280 ppm (pre-industrial) to ~420 ppm, giving a forcing of ~2.3 W/m².', example: 'Doubling CO₂ from 280→560 ppm produces ~3.7 W/m² forcing. Equilibrium climate sensitivity (ECS) is the eventual warming — likely 2.5–4°C per doubling, per IPCC AR6.' },
+      { title: 'Feedback Mechanisms', tag: 'Science', body: '<strong>Positive feedbacks</strong> amplify warming: ice-albedo (melting ice exposes dark ocean, absorbing more heat), water vapour (warmer air holds more H₂O, a GHG), permafrost methane (thawing releases CH₄). <strong>Negative feedbacks</strong> dampen warming: increased evaporation → clouds (mixed effect), blackbody radiation (hotter Earth radiates more). Net feedbacks are strongly positive, explaining why ECS > 1°C.', example: 'The ice-albedo feedback: Arctic sea ice has albedo ~0.85 (reflects 85% of sunlight). Open ocean: ~0.06. Each km² of ice lost dramatically increases heat absorption.' },
+      { title: 'Tipping Points & Non-linearity', tag: 'Science', body: 'Climate tipping points: thresholds beyond which change becomes self-sustaining and potentially irreversible. Examples: <strong>West Antarctic Ice Sheet</strong> collapse (1.5–2°C?), <strong>Amazon dieback</strong> (deforestation + warming → savannification), <strong>Atlantic Meridional Overturning Circulation</strong> (AMOC) slowdown. These systems can exhibit hysteresis — restoring temperatures may not restore the original state.', example: 'AMOC slowdown: freshwater from Greenland melt dilutes salty Atlantic water, weakening the density-driven conveyor. Models suggest possible collapse beyond 1.5–2°C, cooling NW Europe significantly.' }
+    ],
+    quiz: [
+      { q: 'Radiative forcing is measured in:', options: ['°C', 'ppm', 'W/m²', 'kg CO₂ equivalent'], correct: 2, explain: 'Radiative forcing is an energy flux — watts per square metre (W/m²). Positive values mean more energy in than out — net warming. CO₂ doubling produces ~3.7 W/m².' },
+      { q: 'The ice-albedo feedback is a ___ feedback:', options: ['Negative', 'Positive', 'Neutral', 'Depends on hemisphere'], correct: 1, explain: 'Positive: warming → ice melts → darker surface exposed → more solar absorption → more warming → more ice melts. It amplifies the initial perturbation.' },
+      { q: 'Climate tipping points are concerning mainly because:', options: ['They reduce CO₂ in the atmosphere', 'They can be self-sustaining and irreversible', 'They cause immediate temperature drops', 'They only affect polar regions'], correct: 1, explain: 'Beyond a tipping point, the system\'s own dynamics continue the change even if the original forcing stops. Reversing course may not restore the original state due to hysteresis.' }
+    ]
+  }
+];
+
+/* ============================================================
+   Curious Brain — daily three, fresh content, Friday deep dive
+   ============================================================ */
+
+/* ---------- utils ---------- */
+
+const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ESC[c]); }
+
+// Generated content arrives as plain text with **bold** markers. Escape first,
+// then allow only that one piece of emphasis back in. Curated content is Sam's
+// own trusted HTML and renders as-is.
+function fmt(s) { return escHtml(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
+function render(text, source) { return source === 'curated' ? String(text || '') : fmt(text); }
+
+function todayKey(d) { return (d || new Date()).toDateString(); }
+function isFriday(d) { return (d || new Date()).getDay() === 5; }
+
+// Monday-anchored week id, so a Friday deep dive belongs to one week only.
+function weekKey(d) {
+  const dt = new Date(d || Date.now());
+  dt.setHours(0, 0, 0, 0);
+  const day = (dt.getDay() + 6) % 7;
+  dt.setDate(dt.getDate() - day);
+  return dt.toISOString().slice(0, 10);
+}
+
+function daysUntilFriday() {
+  const n = (5 - new Date().getDay() + 7) % 7;
+  return n === 0 ? 0 : n;
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+const subjectById = id => TOPICS.find(t => t.id === id);
+
+/* ---------- state ---------- */
+
+const STORE = 'curious_brain_v3';
+const LEGACY = 'curious_brain_v2';
+
+let state = {
+  schema: 3,
+  streak: 0,
+  lastDate: null,
+  doneToday: [],
+  history: [],
+  totalCorrect: 0,
+  totalAnswered: 0,
+  topicMastery: {},
+  day: null,              // { date, subjects:[id], packs:{ id: {concepts,quiz,source} } }
+  lastChoice: [],         // previous day's three, for the "same as last time" shortcut
+  deepDives: [],          // [{ weekKey, subjectId, subjectName, title, body, createdAt }]
+  seen: {},               // subjectId -> [concept titles already served from curated pool]
+  config: { proxyUrl: '', anonKey: '' }
+};
+
+function loadState() {
+  let raw = null;
+  try { raw = localStorage.getItem(STORE); } catch (e) { /* private mode */ }
+
+  if (raw) {
+    try { state = { ...state, ...JSON.parse(raw) }; } catch (e) { /* corrupt, keep defaults */ }
+  } else {
+    // First run on v3 — carry across everything worth keeping from v2.
+    try {
+      const old = localStorage.getItem(LEGACY);
+      if (old) {
+        const o = JSON.parse(old);
+        state.streak = o.streak || 0;
+        state.lastDate = o.lastDate || null;
+        state.history = Array.isArray(o.history) ? o.history : [];
+        state.totalCorrect = o.totalCorrect || 0;
+        state.totalAnswered = o.totalAnswered || 0;
+        state.topicMastery = o.topicMastery || {};
+        state.doneToday = Array.isArray(o.doneToday) ? o.doneToday : [];
+      }
+    } catch (e) { /* nothing to migrate */ }
+  }
+
+  if (!state.config) state.config = { proxyUrl: '', anonKey: '' };
+  if (!state.seen) state.seen = {};
+  if (!Array.isArray(state.deepDives)) state.deepDives = [];
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* quota or private mode */ }
+}
+
+// A missed day resets the streak. A new day always clears the day's content,
+// which is what makes the app refresh itself on first open.
+function rollDay() {
+  const today = todayKey();
+  if (state.lastDate && state.lastDate !== today) {
+    const yesterday = todayKey(new Date(Date.now() - 864e5));
+    if (state.lastDate !== yesterday) state.streak = 0;
+  }
+  if (!state.day || state.day.date !== today) {
+    if (state.day && state.day.subjects && state.day.subjects.length === 3) {
+      state.lastChoice = state.day.subjects.slice();
+    }
+    state.day = null;
+    state.doneToday = [];
+    saveState();
+  }
+}
+
+/* ---------- content ---------- */
+
+function generationReady() {
+  const c = state.config || {};
+  return Boolean(c.proxyUrl && c.anonKey);
+}
+
+const STYLE_BRIEF =
+  'Pitch it at A-level to early-undergraduate difficulty. Assume no prior knowledge of ' +
+  'this specific topic, but do not condescend and do not simplify into baby talk. ' +
+  'Explain every technical term the first time it appears. Rigorous, precise, and ' +
+  'concrete: real numbers, real named examples, real units.';
+
+async function callProxy(prompt, maxTokens) {
+  const { proxyUrl, anonKey } = state.config;
+  const res = await fetch(proxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + anonKey },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: maxTokens || 2000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!res.ok) throw new Error('Proxy returned ' + res.status);
+  const data = await res.json();
+  const text = data?.content?.[0]?.text ?? data?.text ?? data?.completion;
+  if (!text) throw new Error('No text in proxy response');
+  return text;
+}
+
+function parseJson(text) {
+  let t = String(text).trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) t = fence[1].trim();
+  const start = t.indexOf('{');
+  const end = t.lastIndexOf('}');
+  if (start > 0 || end < t.length - 1) t = t.slice(start, end + 1);
+  return JSON.parse(t);
+}
+
+async function generatePack(subject) {
+  const avoid = (state.seen[subject.id] || []).slice(-12);
+  const prompt =
+    'Write today\'s learning material for the subject "' + subject.name + '".\n\n' +
+    STYLE_BRIEF + '\n\n' +
+    'Return ONLY valid JSON, no commentary, in exactly this shape:\n' +
+    '{"concepts":[{"title":"...","tag":"...","body":"...","example":"..."}],' +
+    '"quiz":[{"q":"...","options":["","","",""],"correct":0,"explain":"..."}]}\n\n' +
+    'Exactly 3 concepts and exactly 3 quiz questions. Each body is 60-110 words. ' +
+    'Each example is one concrete worked case with real figures. ' +
+    'The quiz must test understanding, not recall of the wording. ' +
+    '"correct" is the 0-based index of the right option.\n' +
+    'Use **double asterisks** for emphasis. Do NOT use HTML tags.\n' +
+    (avoid.length ? 'Do not cover these, already seen: ' + avoid.join('; ') + '\n' : '');
+
+  const parsed = parseJson(await callProxy(prompt, 2600));
+  const concepts = (parsed.concepts || []).slice(0, 3).map(c => ({
+    title: String(c.title || 'Untitled'),
+    tag: String(c.tag || subject.name),
+    body: String(c.body || ''),
+    example: c.example ? String(c.example) : ''
+  }));
+  const quiz = (parsed.quiz || []).slice(0, 3)
+    .filter(q => Array.isArray(q.options) && q.options.length >= 2)
+    .map(q => ({
+      q: String(q.q || ''),
+      options: q.options.map(String),
+      correct: Math.max(0, Math.min(q.options.length - 1, Number(q.correct) || 0)),
+      explain: String(q.explain || '')
+    }));
+  if (!concepts.length || !quiz.length) throw new Error('Incomplete generation');
+  return { concepts, quiz, source: 'fresh' };
+}
+
+// Curated fallback — rotate so repeat days serve different material where possible.
+function curatedPack(subject) {
+  const seen = state.seen[subject.id] || [];
+  const unseen = subject.concepts.filter(c => !seen.includes(c.title));
+  const pool = unseen.length ? unseen : subject.concepts;
+  return { concepts: pool.slice(0, 3), quiz: subject.quiz.slice(0, 3), source: 'curated' };
+}
+
+function noteSeen(subjectId, concepts) {
+  const list = state.seen[subjectId] || [];
+  concepts.forEach(c => { if (!list.includes(c.title)) list.push(c.title); });
+  state.seen[subjectId] = list.slice(-40);
+}
+
+// Packs are built when a subject is first opened, not all three up front —
+// so a day you only do one subject costs one generation, not three.
+async function getPack(subjectId) {
+  const subject = subjectById(subjectId);
+  if (!subject) return null;
+  if (state.day?.packs?.[subjectId]) return state.day.packs[subjectId];
+
+  let pack;
+  if (generationReady() && navigator.onLine !== false) {
+    try {
+      pack = await generatePack(subject);
+    } catch (e) {
+      pack = curatedPack(subject);
+      pack.fellBack = e.message || 'generation failed';
+    }
+  } else {
+    pack = curatedPack(subject);
+  }
+
+  noteSeen(subjectId, pack.concepts);
+  state.day.packs[subjectId] = pack;
+  saveState();
+  return pack;
+}
+
+/* ---------- screens ---------- */
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active', 'fade-in');
+  setTimeout(() => el.classList.remove('fade-in'), 300);
+  window.scrollTo(0, 0);
+  document.getElementById('choose-bar').classList.toggle('show', id === 'screen-choose');
+}
+
+function setNav(id) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (id) document.getElementById(id)?.classList.add('active');
+}
+
+/* ---------- home ---------- */
+
+function renderHome() {
+  document.getElementById('streak-num').textContent = state.streak;
+  const chosen = state.day?.subjects || [];
+  const done = state.doneToday.length;
+
+  document.getElementById('today-label').textContent =
+    !chosen.length ? 'Pick your three' : (done >= chosen.length ? '✓ Today complete!' : 'In progress');
+  document.getElementById('topics-done-label').textContent = chosen.length ? done + '/' + chosen.length + ' done' : '—';
+
+  const main = document.getElementById('home-main');
+
+  if (!chosen.length) {
+    main.innerHTML =
+      '<div class="card" style="text-align:center;padding:30px 22px;">' +
+      '<div style="font-size:40px;margin-bottom:10px;">🎯</div>' +
+      '<div style="font-family:\'DM Serif Display\',serif;font-size:22px;margin-bottom:8px;">A new day</div>' +
+      '<div style="color:var(--text2);font-size:14px;line-height:1.6;">Choose three subjects and today\'s concepts are built around them.</div>' +
+      '<button class="btn" data-action="open-choose">Choose today\'s three</button>' +
+      '</div>';
+    renderPreview();
+    return;
+  }
+
+  const src = state.day.packs && Object.values(state.day.packs)[0];
+  const badge = !generationReady()
+    ? '<span class="badge badge-dim">curated</span>'
+    : (src && src.source === 'curated' ? '<span class="badge badge-orange">offline fallback</span>'
+                                       : '<span class="badge badge-green">fresh today</span>');
+
+  main.innerHTML =
+    '<div class="freshness"><div class="section-label">Today\'s three</div>' +
+    '<div>' + badge + ' <button class="btn btn-ghost" style="width:auto;padding:5px 12px;font-size:12px;margin-top:0;display:inline-block;" data-action="open-choose">Change</button></div></div>' +
+    '<div class="topic-grid" id="today-topics"></div>';
+
+  const grid = document.getElementById('today-topics');
+  chosen.forEach(tid => {
+    const t = subjectById(tid);
+    if (!t) return;
+    const isDone = state.doneToday.includes(tid);
+    const div = document.createElement('div');
+    div.className = 'topic-card' + (isDone ? ' done' : '');
+    div.tabIndex = 0;
+    div.setAttribute('role', 'button');
+    div.dataset.action = 'open-subject';
+    div.dataset.subject = tid;
+    div.dataset.from = 'screen-home';
+    if (isDone) div.style.borderColor = t.color + '44';
+    div.innerHTML =
+      (isDone ? '<div class="topic-done pop"></div>' : '') +
+      '<div class="topic-icon">' + escHtml(t.icon) + '</div>' +
+      '<div class="topic-name">' + escHtml(t.name) + '</div>';
+    grid.appendChild(div);
+  });
+
+  renderPreview();
+}
+
+function renderPreview() {
+  const preview = document.getElementById('all-topics-preview');
+  preview.innerHTML = '';
+  TOPICS.forEach(t => {
+    const span = document.createElement('button');
+    span.className = 'chip';
+    span.textContent = t.icon + ' ' + t.name;
+    span.dataset.action = 'open-subject';
+    span.dataset.subject = t.id;
+    span.dataset.from = 'screen-home';
+    preview.appendChild(span);
+  });
+}
+
+/* ---------- choose today's three ---------- */
+
+let picking = [];
+
+function renderChoose() {
+  picking = (state.day?.subjects || []).slice();
+  const grid = document.getElementById('choose-grid');
+  grid.innerHTML = '';
+  TOPICS.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'topic-card';
+    div.tabIndex = 0;
+    div.setAttribute('role', 'button');
+    div.dataset.action = 'pick';
+    div.dataset.subject = t.id;
+    div.innerHTML =
+      '<div class="topic-icon">' + escHtml(t.icon) + '</div>' +
+      '<div class="topic-name">' + escHtml(t.name) + '</div>';
+    grid.appendChild(div);
+  });
+
+  const repeat = document.getElementById('choose-repeat');
+  const canRepeat = state.lastChoice && state.lastChoice.length === 3;
+  repeat.style.display = canRepeat ? 'block' : 'none';
+  if (canRepeat) {
+    repeat.textContent = 'Same as last time: ' + state.lastChoice.map(id => subjectById(id)?.icon || '').join(' ');
+  }
+  syncPicking();
+}
+
+function syncPicking() {
+  document.querySelectorAll('#choose-grid .topic-card').forEach(el => {
+    const on = picking.includes(el.dataset.subject);
+    el.classList.toggle('picked', on);
+    const blocked = !on && picking.length >= 3;
+    el.setAttribute('aria-disabled', blocked ? 'true' : 'false');
+  });
+  document.getElementById('choose-count').textContent = picking.length + ' of 3 selected';
+  const btn = document.getElementById('choose-confirm');
+  btn.disabled = picking.length !== 3;
+  btn.textContent = picking.length === 3 ? 'Start today →' : 'Select three to continue';
+}
+
+function commitChoice(subjects) {
+  state.day = { date: todayKey(), subjects: subjects.slice(), packs: {} };
+  saveState();
+  renderHome();
+  showScreen('screen-home');
+  setNav('nav-home');
+  toast(generationReady() ? 'Today\'s subjects set. Content is generated as you open each one.'
+                          : 'Today\'s subjects set.');
+}
+
+/* ---------- learn ---------- */
+
+let current = { subjectId: null, index: 0, from: 'screen-home' };
+
+async function openSubject(subjectId, from) {
+  const subject = subjectById(subjectId);
+  if (!subject) return;
+
+  // Opening a subject that isn't in today's three still works, it just doesn't
+  // count toward the day — so browsing never silently rewrites your choice.
+  current = { subjectId, index: 0, from: from || 'screen-home' };
+  document.getElementById('learn-back').dataset.screen = current.from;
+
+  showScreen('screen-learn');
+  document.getElementById('learn-content').innerHTML =
+    '<div class="loading"><div class="spinner"></div>' +
+    (generationReady() ? 'Writing today\'s ' + escHtml(subject.name) + '…' : 'Loading…') + '</div>';
+
+  const pack = await getPack(subjectId);
+  if (pack?.fellBack) toast('Offline — showing curated material.');
+  renderLearn();
+}
+
+function renderLearn() {
+  const subject = subjectById(current.subjectId);
+  const pack = state.day?.packs?.[current.subjectId];
+  if (!subject || !pack) return;
+
+  const idx = current.index;
+  const concept = pack.concepts[idx];
+  const total = pack.concepts.length;
+
+  document.getElementById('learn-content').innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">' +
+    '<span style="font-size:24px;">' + escHtml(subject.icon) + '</span>' +
+    '<div style="font-size:14px;font-weight:500;color:var(--text2);">' + escHtml(subject.name) + '</div>' +
+    (pack.source === 'curated' ? '<span class="badge badge-dim" style="margin-left:auto;">curated</span>'
+                               : '<span class="badge badge-green" style="margin-left:auto;">fresh</span>') +
+    '</div>' +
+    '<div class="progress-bar-wrap"><div class="progress-bar" style="width:' + (((idx + 1) / total) * 100) + '%"></div></div>' +
+    '<div class="progress-label">Concept ' + (idx + 1) + ' of ' + total + '</div>' +
+    '<div class="concept-card fade-in">' +
+    '<div class="concept-tag">' + escHtml(concept.tag) + '</div>' +
+    '<div class="concept-title">' + escHtml(concept.title) + '</div>' +
+    '<div class="concept-body">' + render(concept.body, pack.source) + '</div>' +
+    (concept.example ? '<div class="concept-example">' + render(concept.example, pack.source) + '</div>' : '') +
+    '</div>' +
+    '<div class="card-nav">' +
+    (idx > 0 ? '<button class="btn btn-ghost" data-action="prev-card">← Prev</button>' : '<div></div>') +
+    (idx < total - 1
+      ? '<button class="btn" data-action="next-card">Next →</button>'
+      : '<button class="btn" data-action="start-quiz">Take Quiz →</button>') +
+    '</div>';
+}
+
+/* ---------- quiz ---------- */
+
+let quiz = { index: 0, answers: [] };
+
+function startQuiz() {
+  quiz = { index: 0, answers: [] };
+  renderQuiz();
+  showScreen('screen-quiz');
+}
+
+function renderQuiz() {
+  const subject = subjectById(current.subjectId);
+  const pack = state.day?.packs?.[current.subjectId];
+  if (!subject || !pack) return;
+  const qs = pack.quiz;
+
+  if (quiz.index >= qs.length) {
+    const correct = quiz.answers.filter((a, i) => a === qs[i].correct).length;
+    renderQuizResult(correct, qs.length, subject);
+    return;
+  }
+
+  const q = qs[quiz.index];
+  document.getElementById('quiz-content').innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">' +
+    '<span style="font-size:20px;">' + escHtml(subject.icon) + '</span>' +
+    '<div style="font-size:13px;color:var(--text2);">Quiz · ' + escHtml(subject.name) + '</div></div>' +
+    '<div class="progress-bar-wrap"><div class="progress-bar" style="width:' + ((quiz.index / qs.length) * 100) + '%"></div></div>' +
+    '<div class="progress-label">Question ' + (quiz.index + 1) + ' of ' + qs.length + '</div>' +
+    '<div class="quiz-question fade-in">' + render(q.q, pack.source) + '</div>' +
+    '<div class="quiz-options" id="quiz-opts">' +
+    q.options.map((opt, i) =>
+      '<button class="quiz-option" data-action="answer" data-choice="' + i + '">' + render(opt, pack.source) + '</button>'
+    ).join('') +
+    '</div><div id="quiz-feedback"></div>';
+}
+
+function selectAnswer(chosen) {
+  const pack = state.day?.packs?.[current.subjectId];
+  const q = pack.quiz[quiz.index];
+  const isCorrect = chosen === q.correct;
+  quiz.answers.push(chosen);
+
+  document.querySelectorAll('.quiz-option').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    if (i === chosen && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const last = quiz.index >= pack.quiz.length - 1;
+  document.getElementById('quiz-feedback').innerHTML =
+    '<div class="quiz-feedback ' + (isCorrect ? 'correct' : 'wrong') + ' fade-in">' +
+    '<strong>' + (isCorrect ? '✓ Correct!' : '✗ Not quite.') + '</strong> ' + render(q.explain, pack.source) +
+    '</div>' +
+    '<button class="btn" data-action="next-question" style="margin-top:16px;">' +
+    (last ? 'See Result →' : 'Next Question →') + '</button>';
+}
+
+function renderQuizResult(correct, total, subject) {
+  const pct = Math.round((correct / total) * 100);
+  const emoji = pct === 100 ? '🎯' : pct >= 67 ? '🌟' : '📚';
+  const msg = pct === 100 ? 'Perfect score!' : pct >= 67 ? 'Well done!' : 'Keep learning!';
+
+  state.totalCorrect += correct;
+  state.totalAnswered += total;
+  if (!state.topicMastery[subject.id]) state.topicMastery[subject.id] = { sessions: 0, correct: 0, total: 0 };
+  const m = state.topicMastery[subject.id];
+  m.sessions++; m.correct += correct; m.total += total;
+
+  // Only subjects chosen for today advance the day and the streak.
+  const inToday = (state.day?.subjects || []).includes(subject.id);
+  if (inToday && !state.doneToday.includes(subject.id)) {
+    state.doneToday.push(subject.id);
+    const today = todayKey();
+    if (state.lastDate !== today) {
+      const yesterday = todayKey(new Date(Date.now() - 864e5));
+      state.streak = state.lastDate === yesterday ? state.streak + 1 : 1;
+      state.lastDate = today;
+    }
+  }
+
+  state.history.unshift({
+    topic: subject.name, icon: subject.icon, correct, total,
+    date: new Date().toLocaleDateString()
+  });
+  if (state.history.length > 20) state.history = state.history.slice(0, 20);
+  saveState();
+
+  document.getElementById('quiz-content').innerHTML =
+    '<div class="result-banner fade-in">' +
+    '<div class="result-emoji">' + emoji + '</div>' +
+    '<div class="result-title">' + msg + '</div>' +
+    '<div class="result-sub">' + correct + ' / ' + total + ' correct · ' + pct + '%</div></div>' +
+    '<div class="card" style="text-align:center;margin-top:0;">' +
+    '<div style="font-size:48px;font-weight:700;font-family:\'DM Serif Display\',serif;color:var(--accent);">' + pct + '%</div>' +
+    '<div style="color:var(--text2);font-size:14px;margin-top:4px;">' + escHtml(subject.name) + '</div>' +
+    '<div style="margin-top:16px;display:flex;gap:10px;">' +
+    '<button class="btn btn-ghost" data-action="review-cards">Review Cards</button>' +
+    '<button class="btn" data-action="finish-session">Done</button>' +
+    '</div></div>';
+
+  renderHome();
+}
+
+/* ---------- deep dive ---------- */
+
+function thisWeeksDive() {
+  const wk = weekKey();
+  return state.deepDives.find(d => d.weekKey === wk) || null;
+}
+
+function renderDeepDive() {
+  const el = document.getElementById('deepdive-content');
+  const dive = thisWeeksDive();
+
+  if (dive) {
+    const past = state.deepDives.filter(d => d.weekKey !== dive.weekKey);
+    el.innerHTML =
+      '<div class="card">' +
+      '<div class="dd-meta">' + escHtml(dive.subjectName) + ' · ' + escHtml(new Date(dive.createdAt).toLocaleDateString()) + '</div>' +
+      '<div class="concept-title" style="font-size:27px;margin-bottom:18px;">' + escHtml(dive.title) + '</div>' +
+      '<div class="dd-article">' + articleHtml(dive.body) + '</div>' +
+      '</div>' +
+      (past.length ? '<div class="section-label" style="margin-top:24px;">Earlier dives</div>' +
+        past.slice(0, 10).map(d =>
+          '<div class="card-sm" style="margin-bottom:10px;cursor:pointer;" data-action="open-dive" data-week="' + escHtml(d.weekKey) + '">' +
+          '<div style="font-size:14px;">' + escHtml(d.title) + '</div>' +
+          '<div style="font-size:12px;color:var(--text3);margin-top:3px;">' + escHtml(d.subjectName) + ' · ' + escHtml(new Date(d.createdAt).toLocaleDateString()) + '</div>' +
+          '</div>').join('') : '');
+    return;
+  }
+
+  if (!isFriday()) {
+    const n = daysUntilFriday();
+    el.innerHTML =
+      '<div class="card dd-lock">' +
+      '<div style="font-size:44px;margin-bottom:10px;">📖</div>' +
+      '<div class="dd-day">' + (n === 1 ? 'Tomorrow' : n + ' days to go') + '</div>' +
+      '<div style="color:var(--text2);font-size:14px;line-height:1.6;">This week\'s long read unlocks on Friday.</div>' +
+      '</div>' +
+      (state.deepDives.length ? '<div class="section-label" style="margin-top:24px;">Earlier dives</div>' +
+        state.deepDives.slice(0, 10).map(d =>
+          '<div class="card-sm" style="margin-bottom:10px;cursor:pointer;" data-action="open-dive" data-week="' + escHtml(d.weekKey) + '">' +
+          '<div style="font-size:14px;">' + escHtml(d.title) + '</div>' +
+          '<div style="font-size:12px;color:var(--text3);margin-top:3px;">' + escHtml(d.subjectName) + ' · ' + escHtml(new Date(d.createdAt).toLocaleDateString()) + '</div>' +
+          '</div>').join('') : '');
+    return;
+  }
+
+  if (!generationReady()) {
+    el.innerHTML =
+      '<div class="err"><strong>Deep dive needs the proxy.</strong> Long-form pieces are written on demand, ' +
+      'so this one needs a connection to your Supabase proxy. The daily concepts still work offline.</div>' +
+      '<button class="btn" data-action="settings">Open settings</button>';
+    return;
+  }
+
+  const options = (state.day?.subjects?.length ? state.day.subjects : TOPICS.map(t => t.id));
+  el.innerHTML =
+    '<div class="card" style="text-align:center;padding:28px 22px;">' +
+    '<div style="font-size:40px;margin-bottom:10px;">📖</div>' +
+    '<div class="dd-day">It\'s Friday</div>' +
+    '<div style="color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:18px;">Pick a subject for this week\'s long read.</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">' +
+    options.map(id => {
+      const t = subjectById(id);
+      return t ? '<button class="chip" data-action="make-dive" data-subject="' + escHtml(t.id) + '">' + escHtml(t.icon + ' ' + t.name) + '</button>' : '';
+    }).join('') +
+    '</div></div>';
+}
+
+function articleHtml(body) {
+  return String(body || '').split(/\n{2,}/).map(block => {
+    const b = block.trim();
+    if (!b) return '';
+    if (/^#{2,3}\s/.test(b)) return '<h3>' + fmt(b.replace(/^#{2,3}\s*/, '')) + '</h3>';
+    return '<p>' + fmt(b) + '</p>';
+  }).join('');
+}
+
+async function makeDive(subjectId) {
+  const subject = subjectById(subjectId);
+  if (!subject) return;
+  const el = document.getElementById('deepdive-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Writing this week\'s deep dive on ' + escHtml(subject.name) + '…<br><span style="font-size:12px;color:var(--text3);">This one is long, give it a moment.</span></div>';
+
+  const prompt =
+    'Write a long-form deep dive article on a specific, substantive topic within "' + subject.name + '".\n\n' +
+    STYLE_BRIEF + ' This is the advanced weekly read, so go further than an introduction: ' +
+    'build from foundations to a genuinely non-obvious result or debate, and do not pad.\n\n' +
+    'Length: 1200-1800 words. Structure it with "## " section headings. ' +
+    'Use **double asterisks** for emphasis. Do NOT use HTML tags or bullet lists.\n\n' +
+    'Return ONLY valid JSON: {"title":"...","body":"..."} where body is the full article ' +
+    'with \\n\\n between paragraphs.';
+
+  try {
+    const parsed = parseJson(await callProxy(prompt, 6000));
+    const dive = {
+      weekKey: weekKey(),
+      subjectId: subject.id,
+      subjectName: subject.name,
+      title: String(parsed.title || subject.name),
+      body: String(parsed.body || ''),
+      createdAt: Date.now()
+    };
+    if (!dive.body) throw new Error('Empty article');
+    state.deepDives.unshift(dive);
+    if (state.deepDives.length > 30) state.deepDives = state.deepDives.slice(0, 30);
+    saveState();
+    renderDeepDive();
+    toast('This week\'s deep dive is ready.');
+  } catch (e) {
+    el.innerHTML =
+      '<div class="err"><strong>Couldn\'t write it.</strong> ' + escHtml(e.message || 'Unknown error') +
+      '</div><button class="btn" data-action="nav" data-screen="screen-deepdive">Try again</button>';
+  }
+}
+
+/* ---------- picker / stats ---------- */
+
+function renderPicker() {
+  const grid = document.getElementById('picker-grid');
+  grid.innerHTML = '';
+  TOPICS.forEach(t => {
+    const m = state.topicMastery[t.id];
+    const pct = m && m.total ? Math.round((m.correct / m.total) * 100) : null;
+    const div = document.createElement('div');
+    div.className = 'topic-card';
+    div.tabIndex = 0;
+    div.setAttribute('role', 'button');
+    div.dataset.action = 'open-subject';
+    div.dataset.subject = t.id;
+    div.dataset.from = 'screen-picker';
+    div.innerHTML =
+      '<div class="topic-icon">' + escHtml(t.icon) + '</div>' +
+      '<div class="topic-name">' + escHtml(t.name) + '</div>' +
+      (pct !== null ? '<div style="margin-top:8px;"><span class="badge badge-green">' + pct + '% accuracy</span></div>' : '');
+    grid.appendChild(div);
+  });
+}
+
+function renderStats() {
+  document.getElementById('stat-streak').textContent = state.streak;
+  document.getElementById('stat-total').textContent = state.history.length;
+  const acc = state.totalAnswered > 0 ? Math.round((state.totalCorrect / state.totalAnswered) * 100) : 0;
+  document.getElementById('stat-correct').textContent = acc + '%';
+  document.getElementById('stat-topics').textContent = Object.keys(state.topicMastery).length;
+
+  const hist = document.getElementById('history-list');
+  hist.innerHTML = state.history.length === 0
+    ? '<div class="empty-state"><p>No sessions yet. Start learning!</p></div>'
+    : state.history.slice(0, 10).map(h =>
+        '<div class="history-item"><div>' +
+        '<div class="history-topic">' + escHtml(h.icon) + ' ' + escHtml(h.topic) + '</div>' +
+        '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + escHtml(h.date) + '</div></div>' +
+        '<div class="history-score">' + escHtml(h.correct) + '/' + escHtml(h.total) + '</div></div>'
+      ).join('');
+
+  const mast = document.getElementById('mastery-grid');
+  mast.innerHTML = '';
+  TOPICS.forEach(t => {
+    const m = state.topicMastery[t.id];
+    const div = document.createElement('div');
+    div.className = 'topic-card';
+    div.tabIndex = 0;
+    div.setAttribute('role', 'button');
+    div.dataset.action = 'open-subject';
+    div.dataset.subject = t.id;
+    div.dataset.from = 'screen-stats';
+    if (m && m.total) {
+      const pct = Math.round((m.correct / m.total) * 100);
+      div.innerHTML =
+        '<div class="topic-icon">' + escHtml(t.icon) + '</div>' +
+        '<div class="topic-name">' + escHtml(t.name) + '</div>' +
+        '<div style="margin-top:8px;"><div class="progress-bar-wrap">' +
+        '<div class="progress-bar" style="width:' + pct + '%;background:' + escHtml(t.color) + '"></div></div>' +
+        '<div style="font-size:11px;color:var(--text3);margin-top:3px;">' + pct + '% · ' + m.sessions + ' session' + (m.sessions > 1 ? 's' : '') + '</div></div>';
+    } else {
+      div.innerHTML =
+        '<div class="topic-icon">' + escHtml(t.icon) + '</div>' +
+        '<div class="topic-name">' + escHtml(t.name) + '</div>' +
+        '<div style="margin-top:8px;font-size:12px;color:var(--text3);">Not started</div>';
+    }
+    mast.appendChild(div);
+  });
+}
+
+/* ---------- settings ---------- */
+
+function renderSettings() {
+  document.getElementById('cfg-proxy').value = state.config.proxyUrl || '';
+  document.getElementById('cfg-key').value = state.config.anonKey || '';
+  const on = generationReady();
+  document.getElementById('gen-status').innerHTML =
+    '<span class="dot ' + (on ? 'dot-on' : 'dot-off') + '"></span>' +
+    (on ? 'Fresh content on — each day is written for your three subjects.'
+        : 'Fresh content off — using the 45 curated concepts.');
+}
+
+/* ---------- events ---------- */
+
+const ACTIONS = {
+  nav(el) {
+    const screen = el.dataset.screen;
+    showScreen(screen);
+    setNav(el.dataset.nav || null);
+    if (screen === 'screen-picker') renderPicker();
+    if (screen === 'screen-stats') renderStats();
+    if (screen === 'screen-deepdive') renderDeepDive();
+    if (screen === 'screen-home') renderHome();
+  },
+  settings() { renderSettings(); showScreen('screen-settings'); setNav(null); },
+  browse() { renderPicker(); showScreen('screen-picker'); setNav('nav-learn'); },
+  'open-choose'() { renderChoose(); showScreen('screen-choose'); setNav(null); },
+  pick(el) {
+    const id = el.dataset.subject;
+    const i = picking.indexOf(id);
+    if (i >= 0) picking.splice(i, 1);
+    else if (picking.length < 3) picking.push(id);
+    else return;
+    syncPicking();
+  },
+  'confirm-choice'() { if (picking.length === 3) commitChoice(picking); },
+  'repeat-choice'() { if (state.lastChoice?.length === 3) commitChoice(state.lastChoice); },
+  'open-subject'(el) { openSubject(el.dataset.subject, el.dataset.from); },
+  'next-card'() { current.index++; renderLearn(); },
+  'prev-card'() { current.index--; renderLearn(); },
+  'start-quiz'() { startQuiz(); },
+  'back-from-quiz'() { showScreen('screen-learn'); },
+  answer(el) { if (!el.disabled) selectAnswer(Number(el.dataset.choice)); },
+  'next-question'() { quiz.index++; renderQuiz(); },
+  'review-cards'() { current.index = 0; renderLearn(); showScreen('screen-learn'); },
+  'finish-session'() { renderHome(); showScreen('screen-home'); setNav('nav-home'); },
+  'make-dive'(el) { makeDive(el.dataset.subject); },
+  'open-dive'(el) {
+    const d = state.deepDives.find(x => x.weekKey === el.dataset.week);
+    if (!d) return;
+    document.getElementById('deepdive-content').innerHTML =
+      '<button class="back-btn" data-action="nav" data-screen="screen-deepdive" data-nav="nav-deep">← All dives</button>' +
+      '<div class="card"><div class="dd-meta">' + escHtml(d.subjectName) + ' · ' + escHtml(new Date(d.createdAt).toLocaleDateString()) + '</div>' +
+      '<div class="concept-title" style="font-size:27px;margin-bottom:18px;">' + escHtml(d.title) + '</div>' +
+      '<div class="dd-article">' + articleHtml(d.body) + '</div></div>';
+    window.scrollTo(0, 0);
+  },
+  'save-config'() {
+    state.config.proxyUrl = document.getElementById('cfg-proxy').value.trim();
+    state.config.anonKey = document.getElementById('cfg-key').value.trim();
+    saveState();
+    renderSettings();
+    toast(generationReady() ? 'Saved. Fresh content is on.' : 'Saved. Both fields are needed for fresh content.');
+  },
+  async 'test-config'() {
+    if (!generationReady()) { toast('Fill in both fields first.'); return; }
+    toast('Testing…');
+    try {
+      await callProxy('Reply with exactly: ok', 16);
+      toast('Proxy reachable. You\'re set.');
+    } catch (e) {
+      toast('Failed: ' + (e.message || 'unknown error'));
+    }
+  },
+  'reset-today'() {
+    if (state.day) { state.lastChoice = state.day.subjects.slice(); state.day = null; state.doneToday = []; saveState(); }
+    renderChoose(); showScreen('screen-choose'); setNav(null);
+  }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el || el.getAttribute('aria-disabled') === 'true') return;
+  const fn = ACTIONS[el.dataset.action];
+  if (fn) { e.preventDefault(); fn(el); }
+});
+
+// Cards are divs acting as buttons, so give them keyboard parity.
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest('[data-action][role="button"]');
+  if (!el) return;
+  e.preventDefault();
+  el.click();
+});
+
+// Returning to the app after midnight should roll the day over too.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const before = state.day?.date;
+  rollDay();
+  if (before !== state.day?.date) { renderHome(); showScreen('screen-home'); setNav('nav-home'); }
+});
+
+/* ---------- init ---------- */
+
+loadState();
+rollDay();
+renderHome();
+renderPicker();
+</script>
+</body>
+</html>
